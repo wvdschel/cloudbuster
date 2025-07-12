@@ -12,3 +12,19 @@ export function isEmpty(x: any) {
 export function isEmptyObject(obj) {
   return Object.keys(obj).length === 0 && obj.constructor === Object
 }
+
+
+function isValidLink(value:string) {
+  try {
+    new URL(value);
+    return true;
+  } catch (error) {
+    return false;
+  }
+}
+export function isUrl(value:any) {
+  return (
+    typeof value === 'string' &&
+    (value.startsWith('http://') || value.startsWith('https://')) && isValidLink(value)
+  )
+}
