@@ -8,12 +8,14 @@ import {
   EuiModal,
   EuiModalBody,
   EuiModalFooter,
+  EuiText, 
   EuiModalHeader,
   EuiModalHeaderTitle,
 } from '@elastic/eui'
 import { useState } from 'react'
 import ClickOutside from '../ClickOutside/ClickOutside'
 import TextAreaField from './TextAreaField'
+import { isUrl } from '../../utils/missc'
 
 function isEmpty(x: any) {
   return (
@@ -27,17 +29,11 @@ function findLink(inputString) {
   return match ? match[0] : null;
 }
 function getLink(string) {
-  let url
-
-  try {
-    url = new URL(string)
-    if (url.protocol === "http:" || url.protocol === "https:"){
-      return string
-    }
-    return findLink(string)
-  } catch (_) {
-    return findLink(string)
-  }  
+  
+  if (isUrl(string)) {
+    return string
+  }
+  return findLink(string)
 }
 
 
@@ -64,53 +60,72 @@ function isBulkEdit(value, islinks) {
   }
   return false
 
-}
-
-const ListOfTextFields = ({ id,islinks, value, onChange, placeholder , disabled, title}) => {
-  const [showModal, setShowModal] = useState(false)
+}const ListOfTextFields = ({ id, islinks, value, onChange, placeholder, disabled, title }) => {
+  const [showModal, setShowModal] = useState(false);
 
   const closeModal = () => {
-    setShowModal(false)
-  }
-  
-  const openModal = () => {
-    setShowModal(true)
-  }
-  const handleFieldChange = (index, newValue) => {
-    const updatedValue = value.map((item, i) => (i === index ? newValue : item))
-    onChange(updatedValue)
-  }
+    setShowModal(false);
+  };
 
-  const handleRemoveField = index => {
-    const updatedValue = value.filter((_, i) => i !== index)
-    onChange(updatedValue)
-  }
+  const openModal = () => {
+    setShowModal(true);
+  };
+
+  const handleFieldChange = (index, newValue) => {
+    const updatedValue = value.map((item, i) => (i === index ? newValue : item));
+    onChange(updatedValue);
+  };
+
+  const handleRemoveField = (index) => {
+    const updatedValue = value.filter((_, i) => i !== index);
+    onChange(updatedValue);
+  };
 
   const handleAddField = () => {
-    onChange([...value, '']) // Add an empty string as a new field
-  }
+    onChange([...value, '']); // Add an empty string as a new field
+  };
+
+  const hasMoreThan8 = value.length >= 8;
+  const hasMoreThan100 = value.length > 100;
+  const slicedValue = hasMoreThan100 ? value.slice(0, 100):value;
+  const remainingCount = value.length - 100;
 
   return (
-    <div >
-{showModal && (
-  <Modal id={id} value={value} onChangeValue={onChange} islinks={islinks} closeModal={closeModal} /> )}      
-      <div  className={value.length ? value.length >= 8 ?'mb-3 scrollable-lt pr-4' :'mb-3 pr-4' : 'pr-4'}>
-        {value.map((item, index) => (
+    <div>
+      {showModal && (
+        <Modal
+          id={id}
+          value={value}
+          onChangeValue={onChange}
+          islinks={islinks}
+          closeModal={closeModal}
+        />
+      )}
+      <div
+        className={
+          value.length
+            ? hasMoreThan8
+              ? 'mb-3 scrollable-lt pr-4 space-y-3'
+              : 'mb-3 pr-4 space-y-3'
+            : 'pr-4'
+        }
+      >
+        {slicedValue.map((item, index) => (
           <EuiFlexGroup key={index} alignItems="center">
             <EuiFlexItem>
               <EuiFieldText
-              title={title} 
+                title={title}
                 disabled={disabled}
                 placeholder={placeholder}
                 value={item}
-                onChange={e => handleFieldChange(index, e.target.value)}
+                onChange={(e) => handleFieldChange(index, e.target.value)}
                 fullWidth
               />
             </EuiFlexItem>
             <EuiFlexItem grow={false}>
               <EuiButtonIcon
-              title={title} 
-              disabled={disabled}
+                title={title}
+                disabled={disabled}
                 aria-label="Remove field"
                 iconType="cross"
                 color="danger"
@@ -119,17 +134,29 @@ const ListOfTextFields = ({ id,islinks, value, onChange, placeholder , disabled,
             </EuiFlexItem>
           </EuiFlexGroup>
         ))}
+      {hasMoreThan100 && (
+        <EuiText size='s'>
+        <p className="m-0 mt-3">
+          And <strong>{remainingCount}</strong> more {remainingCount === 1 ? 'item' : 'items...'}
+        </p>
+        </EuiText>
+      )}
       </div>
-      <EuiButton className='mr-2' title={title}  disabled={disabled} onClick={handleAddField} iconType="plusInCircle">
+      <EuiButton
+        className="mr-2"
+        title={title}
+        disabled={disabled}
+        onClick={handleAddField}
+        iconType="plusInCircle"
+      >
         Add Field
       </EuiButton>
-       <EuiButtonEmpty 
-      color='text'
-      onClick={openModal}>{isBulkEdit(value, islinks) ? 'Bulk Edit': 'Bulk Add' }</EuiButtonEmpty>
-
+      <EuiButtonEmpty disabled={disabled} color="text" onClick={openModal}>
+        {isBulkEdit(value, islinks) ? 'Bulk Edit' : 'Bulk Add'}
+      </EuiButtonEmpty>
     </div>
-  )
-}
+  );
+};
 
 export default ListOfTextFields
 
@@ -143,7 +170,7 @@ function stripChars(input) {
   return result;
 }
 
-function parseStringToList(input) {
+function parseStringToList(input: string) {
   input = input.trim();
 
   // Handle empty string
@@ -158,7 +185,13 @@ function parseStringToList(input) {
         return jsonList.map(x=>`${x}`.trim())
       }
   } catch (e) {
-    return input.split(/[\n,]+/).map(s => stripChars(s.trim()).trim());
+    const split = input.split(/[\n]+/)
+    const lines = split.map(s => stripChars(s.trim()).trim()).filter(isNotEmpty)
+    if (lines.length === 1) {
+      return lines[0].split(/[,]+/).map((s: string) => stripChars(s.trim()).trim()).filter(isNotEmpty)
+    } else {
+      return lines;
+    }
   }
 }
 
@@ -188,7 +221,9 @@ function Modal({ closeModal, id, value, onChangeValue, islinks }) {
     
   })
   
-  return <ClickOutside exceptions={['euiModal']}  handleClickOutside={() => { closeModal() } }> <EuiModal style={{ minWidth: 720 }} onClose={closeModal}>
+  return <EuiModal onClose={closeModal}>
+    <ClickOutside handleClickOutside={() => { closeModal() } }>
+      <div style={{ minWidth: 720 }}>
         <EuiModalHeader>
           <EuiModalHeaderTitle>Paste Items</EuiModalHeaderTitle>
         </EuiModalHeader>
@@ -217,11 +252,8 @@ function Modal({ closeModal, id, value, onChangeValue, islinks }) {
             let x = parseStringToList(modaltext)
             
             if (islinks){
-              x = x.filter(isNotEmpty).map(getLink).filter(x=>x!== null).map(x=>x.trim())
-            } else {
-              x = x.filter(isNotEmpty).map(x=>x.trim())
+              x = x.map(getLink).filter(x=>x!== null)
             }
-            
             onChangeValue(x)
             closeModal()
           } }>
@@ -229,6 +261,7 @@ function Modal({ closeModal, id, value, onChangeValue, islinks }) {
           </EuiButton>
         </EuiModalFooter>
 
-  </EuiModal>
+      </div>
     </ClickOutside>
+  </EuiModal>
 }
