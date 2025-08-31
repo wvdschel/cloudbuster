@@ -1,2 +1,5 @@
 botasaurus
 botasaurus-server
+opencv-python
+numpy
+scipy

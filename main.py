@@ -1,4 +1,4 @@
-from src.scrape_heading_task import scrape_heading_task
+from src.cf import scrape_cf_turnstile
      
 if __name__ == "__main__":
-    scrape_heading_task({"link":"https://www.omkar.cloud/"})
+    scrape_cf_turnstile("https://wplace.live/")

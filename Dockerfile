@@ -1,15 +1,14 @@
-FROM chetan1111/botasaurus:latest
+FROM docker.io/debian:latest
 
+RUN apt-get update -yy && apt-get install -yy python3-pip chromium chromium-driver python3-venv
 ENV PYTHONUNBUFFERED=1
 
-COPY requirements.txt .
-
-RUN python -m pip install -r requirements.txt
-
 RUN mkdir app
+COPY requirements.txt /app/requirements.txt
 WORKDIR /app
+
+RUN python3 -m venv /app/venv
+RUN /app/venv/bin/pip install -r requirements.txt
+
 COPY . /app
-
-RUN python run.py install
-
-CMD ["python", "run.py"]
+CMD ["/app/venv/bin/python3", "main.py"]
