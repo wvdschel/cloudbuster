@@ -13,7 +13,9 @@ simple, straight forward CloudFlare turnstile defeat mechanism using [Botasaurus
 2. Then ask it to solve a turnsile captcha:
 
 ```
-  curl -X POST http://localhost:8000/token      -H "Content-Type: application/json"      -d '{"link":"https://wplace.live"}'
+  curl -X POST http://localhost:8000/token \
+    -H "Content-Type: application/json"    \
+    -d '{"link":"https://wplace.live"}'
 ```
 
 3. ???
