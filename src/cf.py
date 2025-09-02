@@ -85,7 +85,7 @@ def scrape_cf_turnstile(link, proxy=None):
             retries -= 1
             if retries == 0:
                 print("failed to find turnstile")
-                exit(1)
+                return driver.get_cookies_and_local_storage()
             sleep(0.5)
 
         driver.run_js(CAPTURE_DEVICE_SCALING_JS)
@@ -110,7 +110,7 @@ def scrape_cf_turnstile(link, proxy=None):
             retries -= 1
             if retries == 0:
                 print("failed to find CF token")
-                exit(1)
+                return driver.get_cookies_and_local_storage()
 
         print(f"CF token: {driver.get_local_storage()['captured_cf_token']}")
 
